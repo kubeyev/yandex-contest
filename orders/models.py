@@ -9,6 +9,7 @@ class Order(models.Model):
     courier_id = models.ForeignKey(Courier, on_delete=models.CASCADE)
     assign_time = models.TimeField(null = True, blank = True)
     complete_time = models.TimeField(null = True, blank = True)
+    assigned = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order_id)
