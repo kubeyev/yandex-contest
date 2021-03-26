@@ -44,7 +44,7 @@ class CourierDetail(APIView):
             regions = [region.region for region in courier.regions.all()]
             working_hours = [
                 str(working_hour.start_time.strftime("%H:%M")) + "-" + str(working_hour.end_time.strftime("%H:%M")) for
-                working_hour in courier.workinghour_set.all()]
+                working_hour in courier.courierworkinghour_set.all()]
             courier_dic = {
                 "courier_id": courier.courier_id,
                 "courier_type": courier.courier_type,

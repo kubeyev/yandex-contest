@@ -36,7 +36,7 @@ class CourierSerializer(serializers.Serializer):
             end_time_list = working_hour.split('-')[1].split(':')
             end_time = datetime.time(int(end_time_list[0]), int(end_time_list[1]))
 
-            courier.workinghour_set.get_or_create(start_time=start_time, end_time=end_time)
+            courier.courierworkinghour_set.get_or_create(start_time=start_time, end_time=end_time)
             courier.save()
         return True
 
@@ -52,7 +52,7 @@ class CourierSerializer(serializers.Serializer):
                 )
                 instance.regions.add(courier_region)
         if validated_data.get('working_hours'):
-            instance.workinghour_set.all().delete()
+            instance.courierworkinghour_set.all().delete()
             for working_hour in validated_data['working_hours']:
                 start_time_list = working_hour.split('-')[0].split(':')
                 start_time = datetime.time(int(start_time_list[0]), int(start_time_list[1]))
@@ -60,6 +60,6 @@ class CourierSerializer(serializers.Serializer):
                 end_time_list = working_hour.split('-')[1].split(':')
                 end_time = datetime.time(int(end_time_list[0]), int(end_time_list[1]))
 
-                instance.workinghour_set.get_or_create(start_time=start_time, end_time=end_time)
+                instance.courierworkinghour_set.get_or_create(start_time=start_time, end_time=end_time)
         instance.save()
         return instance

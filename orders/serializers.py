@@ -1,9 +1,13 @@
+from django.shortcuts import get_object_or_404
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
 
 from .models import Order, DeliveryHour
+from couriers.models import Courier, CourierWorkingHour, CourierRegion
+
 import datetime
 
 
@@ -53,3 +57,36 @@ class OrderSerializer(serializers.Serializer):
 
 class AssignSerializer(serializers.Serializer):
     courier_id = serializers.IntegerField()
+
+    def create(self, validated_data):
+        orders = Order.objects.all().filter(assigned=False).order_by("weight")
+        current_courier_id = validated_data.get('courier_id')
+        courier = get_object_or_404(Courier, courier_id=current_courier_id)
+        type = courier.courier_type
+        courier_wieght = None
+        if type == "foot":
+            courier_wieght = 10
+        elif type == "bike":
+            courier_wieght = 15
+        elif type == "car":
+            courier_wieght = 50
+        if courier_wieght is None:
+            return False
+        for order in orders:
+            delivery_hours = order.deliveryhour_set.all()
+            working_hours = courier.courierworkinghour_set.all()
+            if order.weight < courier_wieght:
+                for delivery_hour in delivery_hours:
+                    for working_hour in working_hours:
+                        time_is_common = working_hour.start_time >= delivery_hour.start_time and working_hour.start_time < delivery_hour.end_time or working_hour.end_time > delivery_hour.start_time and working_hour.end_time <= delivery_hour.end_time
+                        if time_is_common:
+                            courier_regions = CourierRegion.objects.filter(courier__courier_id=current_courier_id)
+                            for region in courier_regions:
+                                if region == order.region:
+                                    order.courier_id = validated_data.get('courier_id')
+                                    order.assigned = True
+                                    order.assign_time = datetime.datetime.now().isoformat()
+                                    order.save()
+                                else:
+                                    pass
+        return True

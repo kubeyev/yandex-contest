@@ -1,10 +1,10 @@
 from django.urls import path
-from .views import OrderList
+from .views import OrderList, AssignList
 
 app_name = "order"
 
 # app_name will help us do a reverse look-up latter.
 urlpatterns = [
     path('', OrderList.as_view()),
-    path('assign', OrderList.as_view())
+    path('/assign', AssignList.as_view())
 ]
