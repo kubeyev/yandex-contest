@@ -61,32 +61,58 @@ class AssignSerializer(serializers.Serializer):
     def create(self, validated_data):
         orders = Order.objects.all().filter(assigned=False).order_by("weight")
         current_courier_id = validated_data.get('courier_id')
-        courier = get_object_or_404(Courier, courier_id=current_courier_id)
+        courier = Courier.objects.get(
+            courier_id=current_courier_id
+        )
         type = courier.courier_type
-        courier_wieght = None
+        courier_max_wieght = 0
+        orders_sum_weight = 0
         if type == "foot":
-            courier_wieght = 10
+            courier_max_wieght = 10
         elif type == "bike":
-            courier_wieght = 15
+            courier_max_wieght = 15
         elif type == "car":
-            courier_wieght = 50
-        if courier_wieght is None:
+            courier_max_wieght = 50
+        if courier_max_wieght == 0:
             return False
+
+        output_orders_id = []
+
         for order in orders:
             delivery_hours = order.deliveryhour_set.all()
             working_hours = courier.courierworkinghour_set.all()
-            if order.weight < courier_wieght:
+            region_check = order.region in [region.region for region in courier.regions.all()]
+            if region_check:
                 for delivery_hour in delivery_hours:
                     for working_hour in working_hours:
-                        time_is_common = working_hour.start_time >= delivery_hour.start_time and working_hour.start_time < delivery_hour.end_time or working_hour.end_time > delivery_hour.start_time and working_hour.end_time <= delivery_hour.end_time
-                        if time_is_common:
-                            courier_regions = CourierRegion.objects.filter(courier__courier_id=current_courier_id)
-                            for region in courier_regions:
-                                if region == order.region:
-                                    order.courier_id = validated_data.get('courier_id')
-                                    order.assigned = True
-                                    order.assign_time = datetime.datetime.now().isoformat()
-                                    order.save()
-                                else:
-                                    pass
+                        time_check = working_hour.start_time >= delivery_hour.start_time and working_hour.start_time < delivery_hour.end_time or working_hour.end_time > delivery_hour.start_time and working_hour.end_time < delivery_hour.end_time
+                        if time_check:
+                            courier.order_set.add(order)
+                            order.assigned = True
+                            order.assign_time = datetime.datetime.now().isoformat()
+                            order.save()
+                            output_orders_id.append({"id": order.order_id})
+
+            if orders_sum_weight > courier_max_wieght:
+                courier.order_set.remove({"id": order.order_id})
+                orders_sum_weight -= order.weight
+                order.assign_time = None
+                order.assigned = False
+                output_orders_id.remove(order.order_id)
+
+                break
+        courier.save()
+        return output_orders_id
+
+
+class CompleteSerializer(serializers.Serializer):
+    courier_id = serializers.IntegerField()
+    order_id = serializers.IntegerField()
+    complete_time = serializers.DateTimeField()
+
+    def create(self, validated_data):
+        courier = Courier.objects.get(courier_id=validated_data.get("courier_id"))
+        order = Order.objects.get(order_id=validated_data.get("order_id"))
+        order.complete_time = validated_data.get("complete_time")
+        order.save()
         return True
