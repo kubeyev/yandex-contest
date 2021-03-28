@@ -21,4 +21,4 @@ urlpatterns = [
                   path('admin/', admin.site.urls),
                   path('couriers', include('couriers.urls')),
                   path('orders', include('orders.urls')),
-              ] + staticfiles_urlpatterns
+              ] + staticfiles_urlpatterns()
