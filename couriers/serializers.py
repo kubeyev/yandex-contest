@@ -17,8 +17,21 @@ class CourierSerializer(serializers.Serializer):
         child=serializers.CharField()
     )
 
+    def get(self):
+        courier = Courier.objects.get(courier_id=courier_id)
+        # courier_regions = courier.regions.all()
+        # courier_working_times = courier.courierworkinghour_set.all()
+        responce_dict = {
+            "courier_id": courier.courier_id,
+            "courier_type": courier.courier_type,
+            # "regions": [courier_regions],
+            # "working_hours": [courier_working_times],
+            "rating": courier.rating,
+            "earnings": courier.earnings
+        }
+        return responce_dict
+
     def create(self, validated_data):
-        print("validated data: " + str(validated_data))
         courier, _ = Courier.objects.get_or_create(
             courier_id=validated_data['courier_id'],
             courier_type=validated_data['courier_type'],
