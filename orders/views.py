@@ -13,18 +13,38 @@ import datetime
 
 class OrderList(APIView):
     def post(self, request):
+        common_order_dic = {
+            "order_id": 1,
+            "weight": 2,
+            "region": 3,
+            "delivery_hours": 1
+        }
         orders = request.data.get('data')
         serializer = OrderSerializer(data=orders, many=True)
         orders_id = []
-        if serializer.is_valid():
+        invalid_ids = []
+        no_undescribed_field = False
+        for order in orders:
+            if set(order.keys()) != set(common_order_dic.keys()) \
+            or order["order_id"] in [ord.order_id for ord in Order.objects.all()] \
+            or not order["delivery_hours"] \
+            or type(order.get("weight")) in [int, float] or type(order.get("delivery_hous"))!=list \
+            or type(order.get("region"))!=int:
+                no_undescribed_field = True
+                invalid_ids.append({"id": order['order_id']})
+
+        if not serializer.is_valid():
+            for num in range(len(orders)):
+                if serializer.errors[num] and not {"id": orders[num]['order_id']} in invalid_ids:
+                    invalid_ids.append({"id": orders[num]['order_id']})
+
+        if serializer.is_valid() and not no_undescribed_field:
             serializer.save()
-            for courier in orders:
-                orders_id.append({"id": courier['order_id']})
+            for order in orders:
+                orders_id.append({"id": order['order_id']})
             return Response({"orders": orders_id}, status=status.HTTP_201_CREATED)
-        for i in range(len(orders)):
-            if serializer.errors[i]:
-                orders_id.append({"id": orders[i]['order_id']})
-        return Response({"validation_error": {"couriers": orders_id}}, status=status.HTTP_400_BAD_REQUEST, )
+
+        return Response({"validation_error": {"orders": invalid_ids}}, status=status.HTTP_400_BAD_REQUEST, )
 
 
 class AssignList(APIView):
