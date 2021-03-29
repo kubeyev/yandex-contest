@@ -50,15 +50,12 @@ class AssignList(APIView):
 class CompleteList(APIView):
     def post(self, request):
         serializer = CompleteSerializer(data=request.data)
-        try:
-            courier = Courier.objects.get(
-                courier_id=request.data['courier_id']
-            )
-            order = Order.objects.get(
-                order_id=request.data['order_id']
-            )
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST )
+        courier = Courier.objects.get(
+            courier_id=request.data['courier_id']
+        )
+        order = Order.objects.get(
+            order_id=request.data['order_id']
+        )
 
         if order in courier.order_set.all() and order.assign_time:
             if serializer.is_valid():

@@ -73,8 +73,6 @@ class AssignSerializer(serializers.Serializer):
             courier_max_wieght = 15
         elif type == "car":
             courier_max_wieght = 50
-        if courier_max_wieght == 0:
-            return False
 
         output_orders_id = []
 
@@ -94,7 +92,7 @@ class AssignSerializer(serializers.Serializer):
                             output_orders_id.append({"id": order.order_id})
 
             if orders_sum_weight > courier_max_wieght:
-                courier.order_set.remove({"id": order.order_id})
+                courier.order_set.remove({"order_id": order.order_id})
                 orders_sum_weight -= order.weight
                 order.assign_time = None
                 order.assigned = False

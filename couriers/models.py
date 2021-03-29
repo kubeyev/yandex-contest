@@ -12,8 +12,6 @@ class Courier(models.Model):
     courier_id = models.IntegerField(primary_key=True)
     courier_type = models.CharField(max_length=4)
     regions = models.ManyToManyField(CourierRegion)
-    rating = models.FloatField(null=True, blank=True)
-    earnings = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return str(self.courier_id)
